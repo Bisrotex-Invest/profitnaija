@@ -14,8 +14,10 @@
       "android": {
         "buildType": "apk"
       },
+      "node": "20.x",
+      "yarn": false,
       "cache": {
-        "key": "v2"
+        "key": "v3"
       }
     }
   }
