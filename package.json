@@ -1,6 +1,7 @@
 {
   "name": "profitnaija",
   "version": "1.0.0",
+  "packageManager": "npm@10.2.5",
   "private": false,
   "main": "expo-router/entry",
   "scripts": {
