@@ -14,10 +14,12 @@
       "android": {
         "buildType": "apk"
       },
-      "node": "20",
-      "yarn": "npm",
+      "node": "20.11.1",
+      "env": {
+        "USE_NPM": "1"
+      },
       "cache": {
-        "key": "v3"
+        "key": "v4"
       }
     }
   }
