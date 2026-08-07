@@ -1,16 +1,32 @@
-"production": {
-  "android": {
-    "buildType": "apk"
+{
+  "cli": {
+    "version": ">= 16.0.0"
   },
-  "node": "20.11.1",
-  "env": {
-    "USE_NPM": "1"
-  },
-  "cache": {
-    "key": "v5"
-  },
-  "prebuildCommand": "npm install -g npm@10.2.5",
-  "install": {
-    "command": "npm install"
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "node": "20.11.1",
+      "install": {
+        "command": "npm install"
+      },
+      "env": {
+        "USE_NPM": "1"
+      },
+      "cache": {
+        "key": "v5"
+      }
+    }
   }
 }
