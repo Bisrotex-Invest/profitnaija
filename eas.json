@@ -18,15 +18,14 @@
         "buildType": "apk"
       },
       "node": "20.11.1",
-      "install": {
-        "command": "npm install"
-      },
       "env": {
-        "USE_NPM": "1"
+        "USE_NPM": "1",
+        "COREPACK_ENABLED": "0"
       },
       "cache": {
-        "key": "v5"
-      }
+        "key": "v6"
+      },
+      "prebuildCommand": "npm install -g npm@10.2.5"
     }
   }
 }
