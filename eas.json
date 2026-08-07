@@ -1,14 +1,31 @@
-"production": {
-  "android": {
-    "buildType": "apk"
+{
+  "cli": {
+    "version": ">= 16.0.0"
   },
-  "node": "20.11.1",
-  "env": {
-    "USE_NPM": "1",
-    "COREPACK_ENABLED": "0"
-  },
-  "cache": {
-    "key": "v4"
-  },
-  "prebuildCommand": "corepack disable && npm i -g npm@10.2.5"
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "node": "20.11.1",
+      "env": {
+        "USE_NPM": "1",
+        "COREPACK_ENABLED": "0"
+      },
+      "cache": {
+        "key": "v4"
+      },
+      "prebuildCommand": "corepack disable && npm i -g npm@10.2.5"
+    }
+  }
 }
