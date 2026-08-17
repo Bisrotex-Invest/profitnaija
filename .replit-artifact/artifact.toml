@@ -1,0 +1,23 @@
+kind = "mobile"
+previewPath = "/"
+title = "ProfitNaija"
+version = "1.0.0"
+id = "artifacts/profit-naija"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/" ]
+localPort = 24582
+
+[services.development]
+run = "pnpm --filter @workspace/profit-naija run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/profit-naija", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/profit-naija", "run", "serve" ]
+
+[services.env]
+PORT = "24582"
+BASE_PATH = "/"
