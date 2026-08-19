@@ -19,7 +19,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { getAuthInstance, db } from '@/lib/firebase';
-import {API_URL} from '../config';
+import { API_URL } from '@/app/config';
 
 // ── Action code settings ──────────────────────────────────────────────────────
 // handleCodeInApp: true tells Firebase to format links so Android intent filters

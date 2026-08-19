@@ -1,27 +1,19 @@
-{
-  "cli": {
-    "version": ">= 22.0.0",
-    "appVersionSource": "remote"
-  },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
-  "distribution": "internal",
-  "android": {
-    "buildType": "apk"
-  },
-  "env": {
-    "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
-  }
-},
-    "production": {
-      "autoIncrement": true
+    {
+      "cli": {
+        "version": ">= 16.0.0"
+      },
+      "build": {
+        "preview": {
+          "android": {
+            "buildType": "apk"
+          },
+          "node": "22.17.0"
+        }
+      },
+       "production": {
+      "android": {
+        "buildType": "apk"
+      }
     }
-  },
-  "submit": {
-    "production": {}
   }
-}
+    }

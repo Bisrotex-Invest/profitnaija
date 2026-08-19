@@ -1,3 +1,5 @@
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://your-api-url.com';
+
 export default {
   firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   firebaseAuthDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -5,5 +7,5 @@ export default {
   firebaseStorageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
   firebaseMessagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   firebaseAppId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-  apiUrl: "https://your-api-url.com",
+  apiUrl: API_URL,
 }
