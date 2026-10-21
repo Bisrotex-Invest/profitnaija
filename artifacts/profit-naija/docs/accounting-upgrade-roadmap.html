@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ProfitNaija — Standard Accounting Upgrade Roadmap</title>
+<style>
+@page{size:A4;margin:16mm 17mm 17mm}
+*{box-sizing:border-box}
+body{margin:0;color:#22372d;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.45}
+.page{break-after:page}.page:last-child{break-after:auto}
+.brand{font-size:10pt;font-weight:700;letter-spacing:1.2px;color:#125136;margin-bottom:16px}
+.kicker{color:#6c765e;font-size:9pt;text-transform:uppercase;letter-spacing:1px}
+h1{font-size:27pt;line-height:1.12;color:#10462e;margin:9px 0 15px}
+h2{font-size:17pt;line-height:1.2;color:#10462e;margin:9px 0 15px}
+h3{font-size:12.5pt;color:#10462e;margin:19px 0 8px}
+p{margin:8px 0}
+ul,ol{margin:8px 0;padding-left:20px}
+li{margin-bottom:5px}
+.note{background:#edf4ee;border-left:4px solid #24744b;padding:12px 15px;margin:14px 0}
+.warning{background:#fff6e5;border-left-color:#b18433}
+.result{font-weight:700;color:#125136;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:9.5pt;margin:12px 0}
+th{text-align:left;background:#e7efe8;color:#10462e;font-weight:700}
+th,td{padding:9px 10px;border:1px solid #d4dfd6;vertical-align:top}
+tr{break-inside:avoid}
+.muted{color:#627368;font-size:9pt}
+.footer{margin-top:20px;padding-top:9px;border-top:1px solid #d4dfd6;display:flex;justify-content:space-between;font-size:8.5pt;color:#627368}
+.pill{display:inline-block;border:1px solid #bfcfc1;border-radius:5px;padding:4px 9px;font-size:9pt;margin-bottom:8px}
+</style>
+</head>
+<body>
+<section class="page">
+<div class="brand">PROFITNAIJA</div>
+<div class="kicker">Proposed product roadmap · 7 October 2026</div>
+<h1>Standard accounting.<br>Clear finances at a glance.</h1>
+<p>Keep transaction entry simple while making every financial statement accurate, connected and explainable. A clear dashboard should summarise dependable statements—not replace them.</p>
+<div class="note warning"><strong>Status: proposal, not implementation approval.</strong> Creating this document does not change dashboard calculations, business records, billing or the current app interface. Accounting-policy changes and historical adjustments require separate approval.</div>
+<h3>Phase 1 — Review the accounting and agree the rules</h3>
+<p>Assess how sales, purchases, inventory, payments, returns, expenses and taxes affect the current reports.</p>
+<ul>
+<li>Identify missing records, inconsistent calculations and assumptions.</li>
+<li>Agree the reporting basis, inventory costing method and opening-balance treatment.</li>
+<li>Keep merchant business accounting separate from ProfitNaija subscriptions and partner/platform earnings.</li>
+<li>Identify historical transactions that cannot be reconstructed reliably.</li>
+</ul>
+<p class="result">Deliverable: an agreed accounting specification and correction list, with no business-data changes.</p>
+<h3>Phase 2 — Establish the accounting foundation</h3>
+<p>Introduce a chart of accounts and a balanced double-entry ledger behind the existing simple forms. Users should not need to enter debits and credits themselves.</p>
+<ul>
+<li>A credit sale creates customer debt and revenue, with VAT recorded separately.</li>
+<li>A customer payment increases cash and reduces debt—not revenue again.</li>
+<li>An inventory purchase increases stock and reduces cash or creates supplier debt.</li>
+<li>Selling stock recognises its cost and reduces inventory.</li>
+</ul>
+<p>Establish a trial balance, links between transactions and accounting entries, duplicate-posting protection and a traceable correction history.</p>
+<p class="result">Deliverable: complete, balanced accounting effects for each supported transaction.</p>
+<div class="footer"><span>ProfitNaija · Accounting upgrade roadmap</span><span>1 / 4</span></div>
+</section>
+
+<section class="page">
+<div class="brand">PROFITNAIJA</div>
+<div class="kicker">Complete records → connected statements</div>
+<h2>Build a complete financial picture</h2>
+<h3>Phase 3 — Complete the missing financial records</h3>
+<p>Add the records needed to explain what the business owns, owes, earns and actually receives or pays.</p>
+<ul>
+<li>Opening assets, liabilities and owner’s equity.</li>
+<li>Cash and bank accounts, transfers and reconciliation.</li>
+<li>Owner contributions and drawings.</li>
+<li>Loans, principal repayments and interest.</li>
+<li>Fixed assets and depreciation.</li>
+<li>Unpaid expenses and prepayments where needed.</li>
+<li>Actual tax payments and outstanding obligations.</li>
+<li>Explicit cash or credit settlement of returns.</li>
+</ul>
+<p>Introduce these progressively rather than overwhelming users with a complicated setup form.</p>
+<p class="result">Deliverable: records that support the business’s financial position and actual cash movements.</p>
+<h3>Phase 4 — Produce connected financial statements</h3>
+<table>
+<thead><tr><th>Statement</th><th>What it explains</th></tr></thead>
+<tbody>
+<tr><td><strong>Profit and Loss</strong></td><td>Revenue, cost of sales, expenses and profit during the selected period.</td></tr>
+<tr><td><strong>Balance Sheet</strong></td><td>Assets, liabilities and owner’s equity at the selected date.</td></tr>
+<tr><td><strong>Cash Flow</strong></td><td>Operating, investing and financing cash movements.</td></tr>
+<tr><td><strong>Owner’s Equity movements</strong></td><td>Contributions, drawings and accumulated results.</td></tr>
+</tbody>
+</table>
+<p>Use one accounting ledger, supported by inventory, customer/supplier balances, fixed-asset and tax schedules.</p>
+<h3>Required reconciliation checks</h3>
+<ul>
+<li>Assets equal liabilities plus equity.</li>
+<li>Opening cash plus net cash movement equals closing cash.</li>
+<li>Inventory and customer/supplier schedules match their ledger balances.</li>
+<li>Dashboard, statements and exports agree.</li>
+<li>Mobile and web use consistent accounting treatment and reporting cutoffs.</li>
+</ul>
+<div class="footer"><span>ProfitNaija · Accounting upgrade roadmap</span><span>2 / 4</span></div>
+</section>
+
+<section class="page">
+<div class="brand">PROFITNAIJA</div>
+<div class="kicker">Clear presentation → explicit policy decisions</div>
+<h2>Make the results easy to understand</h2>
+<h3>Phase 5 — Deliver the “at a glance” experience</h3>
+<div class="note"><strong>Profit · Cash &amp; Bank · Customer Debt · Supplier Debt · Stock Value · Business Net Assets</strong></div>
+<p>Each figure should show its period or balance date, a plain-language explanation, a breakdown linked to supporting records, and an equivalent previous-period comparison where useful.</p>
+<p>Show clear warnings for incomplete records, unreconciled balances or estimates. Profit and cash must remain separate: a profitable business can still struggle to pay its bills.</p>
+<p class="result">Deliverable: an understandable financial overview based on dependable statements.</p>
+<h3>Accounting decisions needing your approval</h3>
+<table>
+<thead><tr><th style="width:35%">Existing treatment</th><th>Proposed standard treatment</th></tr></thead>
+<tbody>
+<tr><td>Opening stock is always zero.</td><td>Carry inventory balances forward and recognise the cost of goods sold in the appropriate period.</td></tr>
+<tr><td>Equipment purchases remain P&amp;L expenses.</td><td>Distinguish capital assets from ordinary expenses; recognise depreciation where applicable.</td></tr>
+<tr><td>Cash is reconstructed from recorded activity.</td><td>Establish explicit opening cash/bank balances and reconcile subsequent movements.</td></tr>
+<tr><td>Returns are assumed to have cash settlements.</td><td>Distinguish cash refunds, debt reductions, supplier credits and replacement goods.</td></tr>
+<tr><td>Supplier WHT is linked to the supplier VAT setting.</td><td>Review VAT and withholding applicability separately with a Nigerian accountant.</td></tr>
+<tr><td>PIT is the current income-tax model.</td><td>Apply the appropriate tax treatment for the business’s legal form.</td></tr>
+</tbody>
+</table>
+<div class="note warning"><strong>Opening stock is the most important policy issue.</strong> Forcing it to zero can produce negative cost of sales and misleading profit when inventory carries into a later period. Replacing that previously agreed rule needs your approval.</div>
+<p>Your VAT-exclusive selling-price convention can remain. Changing accounting treatment does not require changing the prices customers were charged.</p>
+<div class="footer"><span>ProfitNaija · Accounting upgrade roadmap</span><span>3 / 4</span></div>
+</section>
+
+<section class="page">
+<div class="brand">PROFITNAIJA</div>
+<div class="kicker">Dashboard impact → safe transition</div>
+<h2>Protect the current dashboard and records</h2>
+<p><strong>The layout does not have to change, but some figures could.</strong> Preserve the existing cards, colours, menus and transaction-entry process. Additional information can appear in card details or a separate Financial Overview page.</p>
+<table>
+<thead><tr><th style="width:29%">Dashboard figure</th><th>Possible effect of the accounting upgrade</th></tr></thead>
+<tbody>
+<tr><td><strong>Sales and Revenue</strong></td><td>Should remain consistent where current recognition and VAT treatment are correct.</td></tr>
+<tr><td><strong>Profit</strong></td><td>Could change with proper carried-forward inventory, depreciation and expense timing.</td></tr>
+<tr><td><strong>Stock Value</strong></td><td>Should reconcile with the inventory ledger; corrections may affect discrepancies.</td></tr>
+<tr><td><strong>Cash/Bank</strong></td><td>Could change when opening balances and actual settlements are recorded and reconciled.</td></tr>
+<tr><td><strong>Customer/Supplier Debt</strong></td><td>Could change where returns, credits or adjustments are missing or misclassified.</td></tr>
+<tr><td><strong>Tax estimates</strong></td><td>Could change after reviewing the applicable business tax treatment.</td></tr>
+</tbody>
+</table>
+<p><strong>The biggest likely difference is profit</strong>, especially where the current zero-opening-stock rule distorts results across reporting periods.</p>
+<h3>Safe transition approach</h3>
+<ol>
+<li>Begin with the read-only assessment; leave current dashboard behaviour unchanged.</li>
+<li>Obtain approval for accounting-policy changes and any historical adjustments.</li>
+<li>Preserve original transactions and create a recoverable backup before approved data changes.</li>
+<li>Compare proposed standard statements with current reports before switching displayed figures.</li>
+<li>Flag unsupported historical balances for review. Never invent missing cash, stock costs or owner capital simply to make statements balance.</li>
+<li>Review differences, reconcile statements, and verify mobile/web consistency before rollout.</li>
+</ol>
+<div class="note"><strong>Recommended first action: Phase 1.</strong> A read-only accounting-gap assessment establishes a reliable implementation scope without changing the dashboard’s appearance, calculations or business records.</div>
+<p class="muted">A qualified accountant should review the agreed treatment and representative statements before the app is described as standards-compliant. This roadmap is not an audit, a compliance certification or a completed implementation.</p>
+<div class="footer"><span>ProfitNaija · Accounting upgrade roadmap</span><span>4 / 4</span></div>
+</section>
+</body>
+</html>
