@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#061A0F">
+  <base href="BASE_PATH_PLACEHOLDER">
+  <title>APP_NAME_PLACEHOLDER</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: #061A0F; }
+    body { overflow: hidden; }
+    button { font: inherit; }
+    .app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 560px;
+      overflow: hidden;
+      background: #061A0F;
+    }
+    .slides {
+      display: flex;
+      width: 300%;
+      height: 100%;
+      transform: translateX(0);
+      transition: transform 360ms cubic-bezier(.22,.61,.36,1);
+      touch-action: pan-y;
+    }
+    .slide {
+      position: relative;
+      width: 33.333333%;
+      height: 100%;
+      flex: 0 0 33.333333%;
+      overflow: hidden;
+      background: var(--dark);
+    }
+    .image {
+      position: absolute;
+      inset: 0 0 auto;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    .fade {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, transparent 34%, color-mix(in srgb, var(--dark) 38%, transparent) 52%, var(--dark) 77%, var(--dark) 100%);
+    }
+    .skip {
+      position: absolute;
+      z-index: 4;
+      top: max(18px, env(safe-area-inset-top));
+      right: 24px;
+      border: 0;
+      padding: 12px 0;
+      color: rgba(255,255,255,.68);
+      background: transparent;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .content {
+      position: absolute;
+      z-index: 2;
+      right: 28px;
+      bottom: 174px;
+      left: 28px;
+    }
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 5px 12px;
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      border-radius: 20px;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 16%, transparent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+    }
+    h1 {
+      max-width: 340px;
+      margin: 0 0 12px;
+      color: #fff;
+      font-size: clamp(34px, 9vw, 54px);
+      line-height: 1.1;
+      letter-spacing: -.8px;
+    }
+    .subtitle {
+      max-width: 340px;
+      margin: 0;
+      color: rgba(255,255,255,.7);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .bottom {
+      position: absolute;
+      z-index: 5;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 28px max(28px, calc(env(safe-area-inset-bottom) + 20px));
+      background: var(--dark);
+    }
+    .dots { display: flex; align-items: center; gap: 7px; height: 7px; }
+    .dot {
+      width: 7px;
+      height: 7px;
+      padding: 0;
+      border: 0;
+      border-radius: 7px;
+      background: rgba(255,255,255,.3);
+      cursor: pointer;
+    }
+    .dot.active { width: 26px; background: var(--accent); }
+    .next {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 54px;
+      border: 0;
+      border-radius: 16px;
+      color: #fff;
+      background: var(--accent);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .next:active, .skip:active, .dot:active { opacity: .78; }
+    .arrow { width: 18px; height: 18px; }
+    @media (min-width: 700px) {
+      .app { max-width: 430px; margin: 0 auto; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 20px 80px rgba(0,0,0,.4); }
+      body { display: grid; place-items: center; background: #111; }
+      .content { bottom: 190px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="APP_NAME_PLACEHOLDER onboarding">
+    <div class="slides" id="slides">
+      <section class="slide" style="--accent:#22C55E;--dark:#061A0F">
+        <img class="image" src="preview-assets/onboarding1.jpg" alt="">
+        <div class="fade"></div>
+        <div class="content">
+          <span class="eyebrow">FOR TRADERS</span>
+          <h1>Track Profits</h1>
+          <p class="subtitle">Log every sale instantly. No spreadsheets, no guesswork — see your real profit after every cost and expense.</p>
+        </div>
+      </section>
+      <section class="slide" style="--accent:#3B82F6;--dark:#050E1F">
+        <img class="image" src="preview-assets/minimart-dashboard.jpg" alt="">
+        <div class="fade"></div>
+        <div class="content">
+          <span class="eyebrow">FOR SHOP OWNERS</span>
+          <h1>Manage Stock</h1>
+          <p class="subtitle">Know what you have and what's running out before you lose a sale.</p>
+        </div>
+      </section>
+      <section class="slide" style="--accent:#F59E0B;--dark:#1A1000">
+        <img class="image" src="preview-assets/onboarding3.jpg" alt="">
+        <div class="fade"></div>
+        <div class="content">
+          <span class="eyebrow">GROW YOUR BUSINESS</span>
+          <h1>Grow Business</h1>
+          <p class="subtitle">Revenue, costs, net profit summarised daily. Make decisions with clarity, not assumptions.</p>
+        </div>
+      </section>
+    </div>
+    <button class="skip" id="skip" type="button">Skip</button>
+    <div class="bottom" id="bottom" style="--accent:#22C55E;--dark:#061A0F">
+      <div class="dots" aria-label="Onboarding slides">
+        <button class="dot active" type="button" aria-label="Slide 1"></button>
+        <button class="dot" type="button" aria-label="Slide 2"></button>
+        <button class="dot" type="button" aria-label="Slide 3"></button>
+      </div>
+      <button class="next" id="next" type="button">
+        <span id="nextLabel">Next</span>
+        <svg class="arrow" id="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+      </button>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const slides = document.getElementById('slides');
+      const bottom = document.getElementById('bottom');
+      const next = document.getElementById('next');
+      const nextLabel = document.getElementById('nextLabel');
+      const arrow = document.getElementById('arrow');
+      const skip = document.getElementById('skip');
+      const dots = [...document.querySelectorAll('.dot')];
+      const data = [
+        { accent: '#22C55E', dark: '#061A0F' },
+        { accent: '#3B82F6', dark: '#050E1F' },
+        { accent: '#F59E0B', dark: '#1A1000' },
+      ];
+      let index = 0;
+      let startX = 0;
+
+      function render() {
+        const current = data[index];
+        slides.style.transform = `translateX(-${index * 33.333333}%)`;
+        bottom.style.setProperty('--accent', current.accent);
+        bottom.style.setProperty('--dark', current.dark);
+        dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+        nextLabel.textContent = index === data.length - 1 ? 'Get Started' : 'Next';
+        arrow.style.display = index === data.length - 1 ? 'none' : 'block';
+        skip.style.display = index === data.length - 1 ? 'none' : 'block';
+        document.querySelector('.app').style.background = current.dark;
+      }
+      function finish() {
+        window.location.href = 'landing';
+      }
+      function advance() {
+        if (index < data.length - 1) {
+          index += 1;
+          render();
+        } else {
+          finish();
+        }
+      }
+      next.addEventListener('click', advance);
+      skip.addEventListener('click', finish);
+      dots.forEach((dot, i) => dot.addEventListener('click', () => { index = i; render(); }));
+      slides.addEventListener('touchstart', event => { startX = event.changedTouches[0].screenX; }, { passive: true });
+      slides.addEventListener('touchend', event => {
+        const distance = event.changedTouches[0].screenX - startX;
+        if (Math.abs(distance) < 45) return;
+        if (distance < 0 && index < data.length - 1) index += 1;
+        if (distance > 0 && index > 0) index -= 1;
+        render();
+      }, { passive: true });
+      render();
+    })();
+  </script>
+</body>
+</html>

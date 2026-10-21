@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "app": {
+    "brand": "ProfitNaija",
+    "androidPackage": "com.profitnaija.app",
+    "iosBundleIdentifier": "com.profitnaija.app",
+    "copyLanguage": "English",
+    "targetMarket": "Nigeria",
+    "websiteUrl": "https://profitnaija.com/",
+    "privacyUrl": "https://profitnaija.com/privacy",
+    "supportUrl": "https://profitnaija.com/about",
+    "termsUrl": "https://profitnaija.com/terms"
+  },
+  "googlePlay": {
+    "title": "ProfitNaija: Accounting",
+    "shortDescription": "Track sales, stock, expenses and profit. Accounting for Nigerian businesses.",
+    "suggestedCategory": "Business"
+  },
+  "appStore": {
+    "name": "ProfitNaija: Accounting",
+    "subtitle": "Sales, stock & profit tracking",
+    "keywords": "bookkeeping,invoices,expenses,inventory,retail,shop,trader,naira,nigeria,sme,tax,vat,wht,pit",
+    "promotionalText": "Keep sales, expenses, stock and customer balances together. Understand your business profit with accounting tools built for Nigerian small businesses.",
+    "suggestedPrimaryCategory": "Business",
+    "suggestedSecondaryCategory": "Finance"
+  },
+  "fullDescription": "Simple business accounting and bookkeeping for shops, traders and small businesses in Nigeria.\n\nProfitNaija helps you keep track of what your business earns, spends, owns and owes. Record everyday transactions and review your sales, expenses, inventory and profit in one place.\n\nRECORD SALES AND EXPENSES\nKeep organised records of your business sales and spending, instead of relying on scattered notes.\n\nTRACK YOUR INVENTORY\nRecord stock purchases and sales, review available quantities and keep an eye on your goods.\n\nMANAGE CUSTOMER AND SUPPLIER BALANCES\nSee outstanding customer and supplier balances so you can follow up on money owed.\n\nCREATE AND SHARE INVOICES\nPrepare invoices for your sales and share them with customers.\n\nUNDERSTAND YOUR BUSINESS RESULTS\nReview sales, expenses and profit reports to understand how your business is performing.\n\nKEEP TAX RECORDS ORGANISED\nView VAT, withholding tax and estimated personal income tax in Tax Center. Tax estimates and reports do not replace professional tax advice or submit returns for you.\n\nACCESS YOUR RECORDS ON MOBILE AND WEB\nUse your ProfitNaija account on your phone and through the web app. Cloud backup and restore are available on eligible plans.\n\nACCESS AND SUBSCRIPTIONS\nA verified account is required. Subscription access is required after the trial. Features depend on your plan. Internet access is needed for account verification, syncing and cloud backup.\n\nProfitNaija is a business record-keeping app, not a bank, lender or investment service.\n\nLearn more: https://profitnaija.com/\nSupport: https://profitnaija.com/about\nPrivacy: https://profitnaija.com/privacy",
+  "screenshots": [
+    {
+      "order": 1,
+      "screen": "Dashboard",
+      "headline": "Know your business profit",
+      "capture": "Show a selected period with internally consistent sales, expenses and profit using synthetic records."
+    },
+    {
+      "order": 2,
+      "screen": "Sale entry",
+      "headline": "Record every sale clearly",
+      "capture": "Show the actual sale-entry screen with fictional product and customer details."
+    },
+    {
+      "order": 3,
+      "screen": "Inventory",
+      "headline": "Know what is in stock",
+      "capture": "Show stock quantities for fictional retail products, not real customer inventory."
+    },
+    {
+      "order": 4,
+      "screen": "Customers",
+      "headline": "See outstanding balances",
+      "capture": "Show fictional customer balances. Do not display real names, phone numbers or emails."
+    },
+    {
+      "order": 5,
+      "screen": "Reports",
+      "headline": "Understand your business results",
+      "capture": "Show the actual profit-and-loss statement, with figures consistent with the dashboard."
+    },
+    {
+      "order": 6,
+      "screen": "Tax Center",
+      "headline": "Keep tax records organised",
+      "capture": "Show actual VAT, WHT and estimated PIT sections. Do not imply automatic tax filing."
+    },
+    {
+      "order": 7,
+      "screen": "Invoice",
+      "headline": "Share clear customer invoices",
+      "capture": "Show a real app-generated invoice using synthetic business and customer details."
+    }
+  ],
+  "sources": [
+    "https://developer.apple.com/app-store/product-page/",
+    "https://support.google.com/googleplay/android-developer/answer/9859152?hl=en",
+    "https://support.google.com/googleplay/android-developer/answer/9898842?hl=en",
+    "https://support.google.com/googleplay/android-developer/answer/9866151?hl=en",
+    "https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/"
+  ]
+}
