@@ -1,0 +1,38 @@
+diff --git a/src/Assets.js b/src/Assets.js
+index b34df882c0205ec80afa4e916daee6baa60e05db..602b6460fe388c91cb4c7647244ca18de349df4f 100644
+--- a/src/Assets.js
++++ b/src/Assets.js
+@@ -174,7 +174,13 @@ async function getAssetData(
+   const isImageInput = assetInfo.files[0].includes(".zip/")
+     ? _fs.default.readFileSync(assetInfo.files[0])
+     : assetInfo.files[0];
+-  const dimensions = isImage ? (0, _imageSize.default)(isImageInput) : null;
++  const dimensions = isImage
++    ? (0, _imageSize.default)(
++        typeof isImageInput === "string"
++          ? _fs.default.readFileSync(isImageInput)
++          : isImageInput,
++      )
++    : null;
+   const scale = assetInfo.scales[0];
+   const assetData = {
+     __packager_asset: true,
+diff --git a/src/Assets.js.flow b/src/Assets.js.flow
+index b81e3f67d92f2dbb8cb1a3efe2538b70ec218ca1..0b29aa7bbdbcc092c3a41104b8035e6a813b78bd 100644
+--- a/src/Assets.js.flow
++++ b/src/Assets.js.flow
+@@ -221,7 +221,13 @@ export async function getAssetData(
+   const isImageInput = assetInfo.files[0].includes('.zip/')
+     ? fs.readFileSync(assetInfo.files[0])
+     : assetInfo.files[0];
+-  const dimensions = isImage ? getImageSize(isImageInput) : null;
++  const dimensions = isImage
++    ? getImageSize(
++        typeof isImageInput === 'string'
++          ? fs.readFileSync(isImageInput)
++          : isImageInput,
++      )
++    : null;
+   const scale = assetInfo.scales[0];
+ 
+   const assetData = {

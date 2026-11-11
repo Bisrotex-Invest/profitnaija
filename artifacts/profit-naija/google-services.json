@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "185642629410",
+    "project_id": "profitnaija",
+    "storage_bucket": "profitnaija.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:185642629410:android:b04befb8970f714a070d7b",
+        "android_client_info": {
+          "package_name": "com.profitnaija.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcFLzbTcfkhcfU4Et6-es8mwlTBb4iN4k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:185642629410:android:221b79797bee2121070d7b",
+        "android_client_info": {
+          "package_name": "com.profitnaija.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcFLzbTcfkhcfU4Et6-es8mwlTBb4iN4k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
