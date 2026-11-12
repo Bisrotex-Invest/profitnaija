@@ -378,12 +378,14 @@ function StockCard({
   item,
   index,
   movements,
+  onView,
   onAdd,
   onSell,
 }: {
   item: Product;
   index: number;
   movements: StockMovement[];
+  onView: () => void;
   onAdd: () => void;
   onSell: () => void;
 }) {
@@ -405,7 +407,7 @@ function StockCard({
 
         {/* ── Top: name + status ── */}
         <View style={styles.cardTop}>
-          <View style={styles.cardTitleRow}>
+          <Pressable testID={`button-open-stock-product-${item.id}`} accessibilityRole="button" accessibilityLabel={`View ${item.name} details`} onPress={onView} style={styles.cardTitleRow}>
             <View style={[styles.productIcon, { backgroundColor: indStyle.bg }]}>
               <MaterialCommunityIcons name="package-variant-closed" size={18} color={indStyle.text} />
             </View>
@@ -419,7 +421,7 @@ function StockCard({
                 </Text>
               </View>
             </View>
-          </View>
+          </Pressable>
 
           <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
             {(isLow || isOut) && (
@@ -433,6 +435,11 @@ function StockCard({
             <Text style={[styles.statusText, { color: statusText }]}>{statusLabel}</Text>
           </View>
         </View>
+        {productMoves[0] && (
+          <Text style={[styles.latestMovement, { color: colors.mutedForeground }]}>
+            Latest stock change: {productMoves[0].type === 'IN' ? '+' : '−'}{productMoves[0].qty} · {productMoves[0].reason || 'Stock change'} · {productMoves[0].date}
+          </Text>
+        )}
 
         {/* ── Stats row ── */}
         <View style={[styles.qtyRow, { borderTopColor: colors.border, borderBottomColor: colors.border }]}>
@@ -616,7 +623,7 @@ export default function StockScreen() {
           baseCost: restock.unitPrice,
           unitPurchasePrice: restock.unitPrice,
           purchaseAmount,
-          carriageInward: restock.carriage,
+          carriageCost: restock.carriage,
           handlingCost: restock.handling,
           totalLandedCost,
           unitsPurchased: qty,
@@ -734,6 +741,7 @@ export default function StockScreen() {
             item={item}
             index={index}
             movements={stockMovements}
+            onView={() => router.push({ pathname: '/(tabs)/product', params: { productId: item.id } })}
             onAdd={() => openModal(item, 'add')}
             onSell={() => openModal(item, 'sell')}
           />
@@ -809,6 +817,7 @@ const styles = StyleSheet.create({
   },
   cardTop: { padding: 14, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   cardTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1, marginRight: 8 },
+  latestMovement: { fontSize: 11, lineHeight: 16, marginTop: 8 },
   productIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   productName: { fontSize: 15, fontFamily: 'Inter_600SemiBold', marginBottom: 4 },
   industryBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },

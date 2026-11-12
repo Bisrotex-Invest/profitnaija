@@ -23,7 +23,7 @@ import {
   getRevenueCatOfferings,
 } from '@/lib/revenuecat';
 import { planFromRevenueCatProductIdentifier, intervalFromRevenueCatProductIdentifier, isRevenueCatTrialPeriod } from '@/lib/revenuecatHelpers';
-import { canPurchaseGooglePlay, isWithinLegacyBillingGrace, usesPaystackManagement } from '@/lib/billingPolicy';
+import { canPurchaseGooglePlay, isWithinLegacyBillingGrace, resolveCheckoutStatus, usesPaystackManagement } from '@/lib/billingPolicy';
 
 export interface BillingStatus {
   /** none = never subscribed · trial · active · expired = lapsed · unknown = can't reach server */
@@ -318,17 +318,19 @@ export function BillingProvider({ children }: { children: React.ReactNode }) {
   }, [uid, checkGrantSession]);
 
   const startCheckout = useCallback(async (planCode: 'starter' | 'pro', interval: 'monthly' | 'yearly' = 'monthly') => {
-    if (Platform.OS === 'android' && billing.entitlementSource === 'grant/admin') {
+    if (!uid || !email) throw new Error('You must be signed in first.');
+    const checkoutBilling = await resolveCheckoutStatus(billing, refreshBilling);
+    if (Platform.OS === 'android' && checkoutBilling.entitlementSource === 'grant/admin') {
       throw new Error('Administrator-granted access must be migrated before purchasing a Google Play subscription.');
     }
-    if (Platform.OS === 'android' && canPurchaseGooglePlay(billing.entitlementSource)) {
+    if (Platform.OS === 'android' && canPurchaseGooglePlay(checkoutBilling.entitlementSource)) {
       const purchase = await purchaseRevenueCatPlan(uid!, planCode, interval);
       const serverStatus = await fetchStatus().catch(() => UNKNOWN);
       const activated = await applyNativeEntitlement(serverStatus, purchase.customerInfo);
       if (!activated.hasAccess) {
         throw new Error('Google Play confirmed the payment, but access is still syncing. Tap “Already paid?” to refresh.');
       }
-      if (!billing.everSubscribed && activated.entitlementSource === 'google_play' && uid) {
+      if (!checkoutBilling.everSubscribed && activated.entitlementSource === 'google_play' && uid) {
         await setDoc(doc(db, 'users', uid), {
           subscriptionSetup: { requiredAt: serverTimestamp(), version: 1 },
         }, { merge: true });
@@ -364,13 +366,15 @@ export function BillingProvider({ children }: { children: React.ReactNode }) {
       return await refreshBilling();
     }
     return await refreshBilling();
-  }, [uid, email, authHeaders, refreshBilling, billing.entitlementSource, billing.everSubscribed, fetchStatus, applyNativeEntitlement]);
+  }, [uid, email, authHeaders, refreshBilling, billing, fetchStatus, applyNativeEntitlement]);
 
   const switchPlan = useCallback(async (planCode: 'starter' | 'pro', interval: 'monthly' | 'yearly' = 'monthly') => {
-    if (Platform.OS === 'android' && billing.entitlementSource === 'grant/admin') {
+    if (!uid || !email) throw new Error('You must be signed in first.');
+    const checkoutBilling = await resolveCheckoutStatus(billing, refreshBilling);
+    if (Platform.OS === 'android' && checkoutBilling.entitlementSource === 'grant/admin') {
       throw new Error('Administrator-granted access must be migrated before purchasing a Google Play subscription.');
     }
-    if (Platform.OS === 'android' && billing.entitlementSource === 'google_play') {
+    if (Platform.OS === 'android' && checkoutBilling.entitlementSource === 'google_play') {
       const purchase = await purchaseRevenueCatPlan(uid!, planCode, interval);
       const serverStatus = await fetchStatus().catch(() => UNKNOWN);
       const activated = await applyNativeEntitlement(serverStatus, purchase.customerInfo);
@@ -392,7 +396,7 @@ export function BillingProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.error ?? data.message ?? 'Could not switch plan.');
     }
     return await refreshBilling();
-  }, [uid, email, authHeaders, refreshBilling, billing.entitlementSource, fetchStatus, applyNativeEntitlement]);
+  }, [uid, email, authHeaders, refreshBilling, billing, fetchStatus, applyNativeEntitlement]);
 
   const restorePurchases = useCallback(async () => {
     if (Platform.OS !== 'android' || !uid) return;

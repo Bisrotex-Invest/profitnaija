@@ -99,14 +99,14 @@ export function formatEntryDescription(entry: Entry): string {
   return entry.partyName ? `${first} · ${entry.partyName}` : first;
 }
 
-export function getPurchaseBaseCost(entry: Pick<Entry, 'amount' | 'baseCost' | 'purchaseAmount' | 'totalLandedCost' | 'unitPurchasePrice' | 'unitsPurchased' | 'materialCosts' | 'carriageInward' | 'handlingCost'>): number {
+export function getPurchaseBaseCost(entry: Pick<Entry, 'amount' | 'baseCost' | 'purchaseAmount' | 'totalLandedCost' | 'unitPurchasePrice' | 'unitsPurchased' | 'materialCosts' | 'carriageInward' | 'carriageCost' | 'handlingCost'>): number {
   if ((typeof entry.unitPurchasePrice === 'number' || typeof entry.baseCost === 'number') && typeof entry.unitsPurchased === 'number') {
     return entry.unitsPurchased * (entry.unitPurchasePrice ?? entry.baseCost ?? 0);
   }
   const materialCosts = entry.materialCosts?.reduce((sum, cost) => sum + cost, 0) ?? 0;
   if (typeof entry.purchaseAmount === 'number') return Math.max(0, entry.purchaseAmount - materialCosts);
   if (typeof entry.totalLandedCost === 'number') {
-    return Math.max(0, entry.totalLandedCost - materialCosts - (entry.carriageInward ?? 0) - (entry.handlingCost ?? 0));
+    return Math.max(0, entry.totalLandedCost - materialCosts - (entry.carriageInward ?? 0) - (entry.carriageCost ?? 0) - (entry.handlingCost ?? 0));
   }
   return Math.max(0, entry.amount - materialCosts);
 }
@@ -232,6 +232,7 @@ export function buildDirectCashFlow(
           : getPurchaseBaseCost(entry)
             + (entry.materialCosts?.reduce((sum, value) => sum + value, 0) ?? 0)
             + (entry.carriageInward ?? 0)
+            + (entry.carriageCost ?? 0)
             + (entry.handlingCost ?? 0) + (entry.purchaseVAT ?? 0) - (entry.withholdingTax ?? 0);
       } else if (entry.type === 'credit_purchase_payment') payments += entry.amount;
       else if (entry.type === 'return_inward') payments += getGrossSaleValue(entry);
@@ -259,6 +260,7 @@ export function buildDirectCashFlow(
       : getPurchaseBaseCost(entry)
         + (entry.materialCosts?.reduce((subtotal, value) => subtotal + value, 0) ?? 0)
         + (entry.carriageInward ?? 0)
+        + (entry.carriageCost ?? 0)
         + (entry.handlingCost ?? 0) + (entry.purchaseVAT ?? 0) - (entry.withholdingTax ?? 0)), 0);
   const creditorPayments = periodEntries.filter(entry => entry.type === 'credit_purchase_payment')
     .reduce((sum, entry) => sum + entry.amount, 0);
@@ -306,6 +308,7 @@ export function calcCostBalance(entries: Entry[], products: Product[] = []): num
       return total + getPurchaseBaseCost(entry)
         + (entry.materialCosts?.reduce((s, v) => s + v, 0) ?? 0)
         + (entry.carriageInward ?? 0)
+        + (entry.carriageCost ?? 0)
         + (entry.handlingCost ?? 0);
     }
     if (entry.type === 'return_outward') {
@@ -664,7 +667,7 @@ export function calcInventoryValueAsOf(products: Product[], entries: Entry[], cu
 
 function purchaseAncillaryCost(entry: Entry): number {
   return (entry.materialCosts?.reduce((sum, cost) => sum + cost, 0) ?? 0)
-    + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0);
+    + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0);
 }
 
 function getProductAncillaryStockValue(product: Product, entries: Entry[], cutoffDate?: string): number {

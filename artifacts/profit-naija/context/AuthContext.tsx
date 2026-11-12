@@ -33,6 +33,7 @@ import { defaultDashboardSelection, type DashboardPeriodSelection } from '@/lib/
 
 const SESSION_IDLE_LIMIT_MS = 20 * 60 * 1000;
 const lastActivityKey = (uid: string) => `pn_last_activity_${uid}`;
+const rememberedEmailKey = 'pn_remembered_email_v1';
 
 function apiBase(): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}/api`;
@@ -205,6 +206,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setPersistence(a, rememberMe ? getReactNativePersistence(AsyncStorage) : inMemoryPersistence);
     }
     const cred = await signInWithEmailAndPassword(a, email.trim(), password);
+    if (Platform.OS === 'web') {
+      try {
+        if (rememberMe) window.localStorage.setItem(rememberedEmailKey, email.trim());
+        else window.localStorage.removeItem(rememberedEmailKey);
+      } catch { /* Email autofill is optional; never block a successful sign-in. */ }
+    } else {
+      try {
+        if (rememberMe) await AsyncStorage.setItem(rememberedEmailKey, email.trim());
+        else await AsyncStorage.removeItem(rememberedEmailKey);
+      } catch { /* Firebase still keeps the selected session persistence. */ }
+    }
     const now = Date.now();
     lastActivityAt.current = now;
     lastActivityPersistedAt.current = now;

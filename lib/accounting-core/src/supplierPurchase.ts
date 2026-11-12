@@ -8,6 +8,7 @@ export interface SupplierPurchaseFields {
   totalLandedCost?: number;
   materialCosts?: number[];
   carriageInward?: number;
+  carriageCost?: number;
   handlingCost?: number;
   purchaseVAT?: number;
   withholdingTax?: number;
@@ -20,16 +21,16 @@ export function supplierPurchasePayable(entry: SupplierPurchaseFields): number {
   if (typeof entry.unitsPurchased === 'number' &&
       (typeof entry.unitPurchasePrice === 'number' || typeof entry.baseCost === 'number')) {
     landed = entry.unitsPurchased * (entry.unitPurchasePrice ?? entry.baseCost ?? 0)
-      + materials + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0);
+      + materials + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0);
   } else if (typeof entry.purchaseAmount === 'number') {
-    landed = entry.purchaseAmount + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0);
+    landed = entry.purchaseAmount + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0);
   } else if (typeof entry.totalLandedCost === 'number') {
     landed = entry.totalLandedCost;
   } else if (typeof entry.supplierPayable === 'number') {
     // Without a reconstructible cost basis, do not add tax or charges twice.
     return Math.max(0, entry.supplierPayable);
   } else {
-    landed = (entry.amount ?? 0) + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0);
+    landed = (entry.amount ?? 0) + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0);
   }
   return Math.max(0, landed + (entry.purchaseVAT ?? 0) - (entry.withholdingTax ?? 0));
 }

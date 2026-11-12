@@ -196,9 +196,12 @@ export default function SubscribeScreen() {
           )}
 
           <TouchableOpacity
+            testID="subscription-checkout"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busy, busy }}
             activeOpacity={0.85}
             onPress={handlePay}
-            disabled={busy || billing.state === 'unknown'}
+            disabled={busy}
             style={[styles.payBtn, { backgroundColor: colors.primary, opacity: busy ? 0.7 : 1 }]}
           >
             {busy ? (
@@ -218,6 +221,15 @@ export default function SubscribeScreen() {
               </>
             )}
           </TouchableOpacity>
+          {billing.state === 'unknown' && (
+            <View style={[styles.noteCard, { backgroundColor: colors.card }]}>
+              <AlertTriangle size={16} color={colors.mutedForeground} />
+              <Text style={[styles.noteText, { color: colors.mutedForeground }]}>
+                Your subscription status could not be confirmed. Tap the button above to retry.
+                No purchase will start until this check succeeds.
+              </Text>
+            </View>
+          )}
         </ScrollView>
       </View>
     );

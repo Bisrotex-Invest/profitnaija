@@ -156,7 +156,8 @@ function getEntryDetailRows(entry: Entry, formatAmount: (value: number) => strin
       { label: 'Supplier payable', value: formatAmount(supplierPurchasePayable(entry)) },
     );
     if (entry.materialCosts?.length) rows.push({ label: 'Material / other costs', value: formatAmount(entry.materialCosts.reduce((sum, cost) => sum + cost, 0)) });
-    if (typeof entry.carriageInward === 'number') rows.push({ label: 'Carriage', value: formatAmount(entry.carriageInward) });
+    if (typeof entry.carriageInward === 'number') rows.push({ label: 'Inbound transport / freight', value: formatAmount(entry.carriageInward) });
+    if (typeof entry.carriageCost === 'number') rows.push({ label: 'Carriage cost', value: formatAmount(entry.carriageCost) });
     if (typeof entry.handlingCost === 'number') rows.push({ label: 'Handling', value: formatAmount(entry.handlingCost) });
   }
   if (MODE_TYPES.includes(entry.type)) rows.push({ label: 'Mode of Payment', value: getPaymentModeLabel(entry) });
@@ -478,13 +479,13 @@ function ReportMetricRow({
 }
 
 const plStyles = StyleSheet.create({
-  row:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 13 },
+  row:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, paddingVertical: 13 },
   rowLabelGroup: { flex: 1, minWidth: 0, paddingRight: 12 },
   stackedRow: { flexDirection: 'column', alignItems: 'stretch', gap: 6 },
   rowSep:   { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 4, paddingTop: 14 },
-  rowLabel: { fontSize: 14, lineHeight: 20, fontFamily: 'Inter_400Regular' },
+  rowLabel: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20, fontFamily: 'Inter_400Regular' },
   rowHelper: { fontSize: 10, lineHeight: 14, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  rowValue: { flexShrink: 0, maxWidth: '45%', textAlign: 'right', fontSize: 15, lineHeight: 21, fontFamily: 'Inter_600SemiBold' },
+  rowValue: { flexShrink: 0, maxWidth: '55%', textAlign: 'right', fontVariant: ['tabular-nums'], fontSize: 15, lineHeight: 21, fontFamily: 'Inter_600SemiBold' },
   stackedLabel: { width: '100%', paddingRight: 0 },
   stackedValue: { maxWidth: '100%', width: '100%', textAlign: 'left' },
   rowBold:  { fontFamily: 'Inter_700Bold', fontSize: 15 },
@@ -908,7 +909,8 @@ export default function ReportScreen({ taxCenter = false }: { taxCenter?: boolea
   const cashPurchaseBase = filtered.filter(entry => entry.type === 'purchase').reduce((sum, entry) => sum + getPurchaseBaseCost(entry), 0);
   const creditPurchaseBase = filtered.filter(entry => entry.type === 'credit_purchase').reduce((sum, entry) => sum + getPurchaseBaseCost(entry), 0);
   const materialOtherCosts = periodPurchaseEntries.reduce((sum, entry) => sum + (entry.materialCosts?.reduce((subtotal, value) => subtotal + value, 0) ?? 0), 0);
-  const carriageCosts = periodPurchaseEntries.reduce((sum, entry) => sum + (entry.carriageInward ?? 0), 0);
+  const freightCosts = periodPurchaseEntries.reduce((sum, entry) => sum + (entry.carriageInward ?? 0), 0);
+  const carriageCosts = periodPurchaseEntries.reduce((sum, entry) => sum + (entry.carriageCost ?? 0), 0);
   const handlingCosts = periodPurchaseEntries.reduce((sum, entry) => sum + (entry.handlingCost ?? 0), 0);
   const returnsOutwardCost = filtered.filter(entry => entry.type === 'return_outward')
     .reduce((sum, entry) => sum + getInventoryMovementCost(entry, products), 0);
@@ -1084,7 +1086,7 @@ export default function ReportScreen({ taxCenter = false }: { taxCenter?: boolea
         { label: 'Less: Closing Stock = Stock Value as of report end', value: `−${fmtPnlNaira(closingStock)}` },
         { label: 'Cost of Sales', value: `${costOfGoodsSold < 0 ? '−' : ''}${fmtPnlNaira(costOfGoodsSold)}` },
       );
-      note = `Purchases = cash base ${fmtPnlNaira(cashPurchaseBase)} + credit base ${fmtPnlNaira(creditPurchaseBase)} + material/other ${fmtPnlNaira(materialOtherCosts)} + handling ${fmtPnlNaira(handlingCosts)} + carriage ${fmtPnlNaira(carriageCosts)} − returns outward ${fmtPnlNaira(returnsOutwardCost)}.`;
+      note = `Purchases = cash base ${fmtPnlNaira(cashPurchaseBase)} + credit base ${fmtPnlNaira(creditPurchaseBase)} + material/other ${fmtPnlNaira(materialOtherCosts)} + handling ${fmtPnlNaira(handlingCosts)} + inbound freight ${fmtPnlNaira(freightCosts)} + carriage ${fmtPnlNaira(carriageCosts)} − returns outward ${fmtPnlNaira(returnsOutwardCost)}.`;
     } else if (title.startsWith('Gross ')) {
       details.push(
         { label: 'Revenue', value: fmtPnlNaira(statementRevenue) },
@@ -1571,7 +1573,7 @@ export default function ReportScreen({ taxCenter = false }: { taxCenter?: boolea
                 <ReportMetricRow
                   key={entry.id ?? `credit-purchase-${index}`}
                   label={`Creditors${entry.type === 'expense' ? ' (Expense)' : ''} · ${entry.date} · ${entry.type === 'expense' ? (entry.category || 'Expense') : (entry.itemName || 'Product')} · ${entry.partyName || 'Supplier'} · ${entry.partyPhone || 'No phone'}`}
-                  value={entry.type === 'expense' ? fmt(entry.amount) : `Base ${fmt((entry.unitPurchasePrice ?? entry.baseCost ?? 0) * (entry.unitsPurchased ?? 0))} · Material/other ${fmt(entry.materialCosts?.reduce((sum, value) => sum + value, 0) ?? 0)} · Carriage ${fmt(entry.carriageInward ?? 0)} · Handling ${fmt(entry.handlingCost ?? 0)}`}
+                  value={entry.type === 'expense' ? fmt(entry.amount) : `Base ${fmt((entry.unitPurchasePrice ?? entry.baseCost ?? 0) * (entry.unitsPurchased ?? 0))} · Material/other ${fmt(entry.materialCosts?.reduce((sum, value) => sum + value, 0) ?? 0)} · Freight ${fmt(entry.carriageInward ?? 0)} · Carriage ${fmt(entry.carriageCost ?? 0)} · Handling ${fmt(entry.handlingCost ?? 0)}`}
                   stacked
                   onPress={() => setSelectedParty(entry)}
                 />

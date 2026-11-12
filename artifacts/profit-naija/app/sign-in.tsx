@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -67,6 +67,14 @@ export default function SignInScreen() {
   const [error, setError] = useState('');
 
   const passwordRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem('pn_remembered_email_v1').then(value => {
+      if (active && value) setEmail(value);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   const handleSignIn = async () => {
     setError('');
@@ -148,6 +156,8 @@ export default function SignInScreen() {
                   placeholder="you@example.com"
                   placeholderTextColor={colors.mutedForeground}
                   keyboardType="email-address"
+                  autoComplete="email"
+                  textContentType="emailAddress"
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="next"

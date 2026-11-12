@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { canPurchaseGooglePlay, isWithinLegacyBillingGrace, usesPaystackManagement } from '@/lib/billingPolicy';
+import { canPurchaseGooglePlay, isWithinLegacyBillingGrace, resolveCheckoutStatus, usesPaystackManagement } from '@/lib/billingPolicy';
 import {
   annualSavingsPercent,
   planFromRevenueCatProductIdentifier,
@@ -66,4 +66,42 @@ test('prevents Paystack-to-Play double billing and keeps legacy management on Pa
   assert.equal(usesPaystackManagement('paystack'), true);
   assert.equal(canPurchaseGooglePlay('none'), true);
   assert.equal(canPurchaseGooglePlay('google_play'), true);
+});
+
+test('checkout retries unknown status and uses the newly verified provider', async () => {
+  for (const source of ['google_play', 'paystack', 'grant/admin', 'none'] as const) {
+    let refreshes = 0;
+    const status = await resolveCheckoutStatus(
+      { state: 'unknown', entitlementSource: 'none' as typeof source },
+      async () => {
+        refreshes++;
+        return { state: 'none', entitlementSource: source };
+      },
+    );
+    assert.equal(refreshes, 1);
+    assert.equal(status.entitlementSource, source);
+    assert.equal(canPurchaseGooglePlay(status.entitlementSource), source === 'none' || source === 'google_play');
+  }
+});
+
+test('checkout does not refresh an already verified subscription', async () => {
+  const known = { state: 'active', entitlementSource: 'google_play' };
+  assert.equal(await resolveCheckoutStatus(known, async () => {
+    throw new Error('Should not refresh');
+  }), known);
+});
+
+test('checkout surfaces unresolved access checks without starting a purchase', async () => {
+  const unknown = { state: 'unknown', accessReason: 'Server unavailable.' };
+  await assert.rejects(resolveCheckoutStatus(unknown, async () => unknown), /Server unavailable.*No purchase was started/);
+  await assert.rejects(resolveCheckoutStatus(unknown, async () => {
+    throw new Error('Network unavailable');
+  }), /Network unavailable/);
+});
+
+test('checkout stops waiting for a stalled status check', async () => {
+  await assert.rejects(
+    resolveCheckoutStatus({ state: 'unknown' }, () => new Promise(() => {}), 5),
+    /timed out.*No purchase was started/,
+  );
 });

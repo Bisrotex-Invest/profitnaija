@@ -37,6 +37,7 @@ export interface GeneralLedgerSourceEntry {
   unitPurchasePrice?: number;
   purchaseAmount?: number;
   carriageInward?: number;
+  carriageCost?: number;
   handlingCost?: number;
   totalLandedCost?: number;
   linkedCreditEntryId?: string;
@@ -227,6 +228,7 @@ function recordedAncillaryCost(entry: GeneralLedgerSourceEntry): number {
   return roundMoney(
     (entry.materialCosts ?? []).reduce((sum, cost) => sum + safe(cost), 0)
     + safe(entry.carriageInward)
+    + safe(entry.carriageCost)
     + safe(entry.handlingCost),
   );
 }

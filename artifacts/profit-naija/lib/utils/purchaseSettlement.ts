@@ -2,7 +2,7 @@ import type { Entry, Product } from '@/context/EntriesContext';
 import { getOutstandingCredits, getPurchaseBaseCost, getInventoryMovementCost, getReturnBaseCost, supplierPurchasePayable } from './formulas.ts';
 
 export interface PurchaseSettlement {
-  base: number; materials: number; carriage: number; handling: number;
+  base: number; materials: number; carriage: number; freight?: number; handling: number;
   landed: number; vat: number; withholding: number;
   payable: number; paid: number; outstanding: number; returnCredits: number; isCredit: boolean;
 }
@@ -11,25 +11,26 @@ export interface PurchaseSettlement {
 export function getPurchaseSettlement(entry: Entry, allEntries: Entry[], asOf?: string): PurchaseSettlement {
   const base = getPurchaseBaseCost(entry);
   const materials = entry.materialCosts?.reduce((s, c) => s + c, 0) ?? 0;
-  const carriage = entry.carriageInward ?? 0;
+  const freight = entry.carriageInward ?? 0;
+  const carriage = entry.carriageCost ?? 0;
   const handling = entry.handlingCost ?? 0;
   const vat = entry.purchaseVAT ?? 0;
   const withholding = entry.withholdingTax ?? 0;
-  const landed = base + materials + carriage + handling;
+  const landed = base + materials + freight + carriage + handling;
   const isCredit = entry.type === 'credit_purchase';
   if (!isCredit) {
     const payable = supplierPurchasePayable(entry);
-    return { base, materials, carriage, handling, landed, vat, withholding, payable, paid: payable, outstanding: 0, returnCredits: 0, isCredit };
+    return { base, materials, freight, carriage, handling, landed, vat, withholding, payable, paid: payable, outstanding: 0, returnCredits: 0, isCredit };
   }
   const credit = getOutstandingCredits(asOf ? allEntries.filter(e => e.date <= asOf) : allEntries, 'purchase', undefined, true).find(c => c.originalEntry.id === entry.id);
   const payable = credit?.grossAmount ?? supplierPurchasePayable(entry);
   const paid = credit?.paidToDate ?? 0;
-  return { base, materials, carriage, handling, landed, vat, withholding, payable, paid, returnCredits: credit?.returnCredits ?? 0, outstanding: credit?.remainingBalance ?? Math.max(0, payable - paid), isCredit };
+  return { base, materials, freight, carriage, handling, landed, vat, withholding, payable, paid, returnCredits: credit?.returnCredits ?? 0, outstanding: credit?.remainingBalance ?? Math.max(0, payable - paid), isCredit };
 }
 
 export function sumPurchaseSettlements(list: PurchaseSettlement[]): PurchaseSettlement {
-  const z: PurchaseSettlement = { base: 0, materials: 0, carriage: 0, handling: 0, landed: 0, vat: 0, withholding: 0, payable: 0, paid: 0, outstanding: 0, returnCredits: 0, isCredit: false };
-  for (const s of list) for (const k of Object.keys(z) as Array<keyof PurchaseSettlement>) if (k !== 'isCredit') (z[k] as number) += s[k] as number;
+  const z: PurchaseSettlement = { base: 0, materials: 0, carriage: 0, freight: 0, handling: 0, landed: 0, vat: 0, withholding: 0, payable: 0, paid: 0, outstanding: 0, returnCredits: 0, isCredit: false };
+  for (const s of list) for (const k of Object.keys(z) as Array<keyof PurchaseSettlement>) if (k !== 'isCredit') (z[k] as number) += (s[k] as number | undefined) ?? 0;
   return z;
 }
 
@@ -59,6 +60,8 @@ export function getPurchaseDetailSections(s: PurchaseSettlement, purchases: Entr
     { label: 'Total base cost', value: s.base },
     { label: 'Less Returns Outward (base cost)', value: -returnedBase },
     { label: 'Net base cost', value: s.base - returnedBase, total: true },
+    { label: 'Inbound transport / freight per unit', value: perUnit(s.freight ?? 0) },
+    { label: 'Total inbound transport / freight', value: s.freight ?? 0 },
     { label: 'Carriage cost per unit', value: perUnit(s.carriage) },
     { label: 'Total carriage cost', value: s.carriage },
     { label: 'Handling cost per unit', value: perUnit(s.handling) },

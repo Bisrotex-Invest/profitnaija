@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +17,7 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useColors } from '@/hooks/useColors';
 import { useEntries, Product } from '@/context/EntriesContext';
+import { productActivityRows } from '@workspace/accounting-core';
 import { useProfile } from '@/context/ProfileContext';
 import {
   Package, X, TrendingUp, AlertCircle, AlertTriangle,
@@ -26,7 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calcStockValue } from '@/lib/utils/formulas';
 import { extractVATAmount } from '@/lib/utils/price';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
 const NAIRA = '₦';
@@ -57,10 +58,16 @@ function safeBusinessName(value: string): string {
 
 function ProductPdfControls({ product }: { product: Product }) {
   const [working, setWorking] = useState(false);
+  const { entries, stockMovements } = useEntries();
+  const activityRows = productActivityRows(product, entries);
+  const latestMovement = stockMovements.find(movement => movement.productId === product.id);
   const { profile } = useProfile();
   const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char] ?? char));
   const stockValue = product.stockCost ?? product.stockQty * product.costPrice;
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(safeBusinessName(profile.businessName))} — ${escapeHtml(product.name)}</title><style>body{font-family:Arial,sans-serif;padding:36px;color:#172033}h1{color:#16723a}.row{padding:10px 0;border-bottom:1px solid #e5e7eb}.label{color:#64748b;display:inline-block;width:48%}</style></head><body><h1>${escapeHtml(profile.businessName || 'Business')}</h1><h2>${escapeHtml(product.name)}</h2><p>Powered by ProfitNaija</p><div class="row"><span class="label">Units available</span>${product.stockQty}</div><div class="row"><span class="label">Cost price</span>${fmt(product.costPrice)}</div><div class="row"><span class="label">Selling price</span>${fmt(product.suggestedPrice)}</div><div class="row"><span class="label">VAT per unit</span>${fmt(extractVATAmount(product.suggestedPrice))}</div><div class="row"><span class="label">Markup</span>${product.markup}%</div><div class="row"><span class="label">Stock value</span>${fmt(stockValue)}</div></body></html>`;
+  const latestMovementLabel = latestMovement
+    ? `${latestMovement.type === 'IN' ? '+' : '−'}${latestMovement.qty} · ${latestMovement.reason || 'Stock change'} · ${latestMovement.date}`
+    : 'No stock movement recorded';
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(safeBusinessName(profile.businessName))} — ${escapeHtml(product.name)}</title><style>body{font-family:Arial,sans-serif;padding:36px;color:#172033}h1{color:#16723a}.row{padding:10px 0;border-bottom:1px solid #e5e7eb}.label{color:#64748b;display:inline-block;width:48%}</style></head><body><h1>${escapeHtml(profile.businessName || 'Business')}</h1><h2>${escapeHtml(product.name)}</h2><p>Powered by ProfitNaija</p>${activityRows.map(row => `<div class="row"><span class="label">${escapeHtml(row.label)}</span>${row.value == null ? 'Not recorded' : row.quantity ? row.value : fmt(row.value)}</div>`).join('')}<p>Prices exclude VAT. Purchase totals are goods only; balance includes returns and stock adjustments.</p><div class="row"><span class="label">Latest stock change</span>${escapeHtml(latestMovementLabel)}</div><div class="row"><span class="label">Landed cost per remaining unit</span>${fmt(product.costPrice)}</div><div class="row"><span class="label">Current selling price</span>${fmt(product.suggestedPrice)}</div><div class="row"><span class="label">VAT per unit</span>${fmt(extractVATAmount(product.suggestedPrice))}</div><div class="row"><span class="label">Markup</span>${product.markup}%</div><div class="row"><span class="label">Stock value</span>${fmt(stockValue)}</div></body></html>`;
   const makePdf = async () => Print.printToFileAsync({ html });
   const run = async (action: 'print' | 'save' | 'share') => {
     setWorking(true);
@@ -99,6 +106,9 @@ function ProductPdfControls({ product }: { product: Product }) {
 
 function ProductDetailModal({ product, onClose, onEdit, onDelete }: { product: Product; onClose: () => void; onEdit: () => void; onDelete: () => void }) {
   const colors = useColors();
+  const { entries, stockMovements } = useEntries();
+  const activityRows = productActivityRows(product, entries);
+  const latestMovement = stockMovements.find(movement => movement.productId === product.id);
   const ind = indStyle(product.industry);
   const isOutOfStock = product.stockQty === 0;
   const stockValue = product.stockCost ?? product.stockQty * product.costPrice;
@@ -150,10 +160,18 @@ function ProductDetailModal({ product, onClose, onEdit, onDelete }: { product: P
 
             {/* Details */}
             <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false}>
-              <Row label="Units Available"       value={`${product.stockQty} units`}
-                valueColor={isOutOfStock ? '#D32F2F' : colors.foreground} />
-              <Row label="Cost Price (per unit)"  value={fmt(product.costPrice)} valueColor={colors.expense} />
-              <Row label="Sell Price"             value={fmt(product.suggestedPrice)} valueColor={colors.revenue} />
+              {activityRows.map(row => (
+                <Row key={row.label} label={row.label}
+                  value={row.value == null ? 'Not recorded' : row.quantity ? `${row.value} units` : fmt(row.value)} />
+              ))}
+              <Text style={{ color: colors.mutedForeground, fontSize: 12, marginVertical: 8 }}>
+                Prices exclude VAT. Purchase totals are goods only. Balance includes returns and stock adjustments.
+              </Text>
+              <Row label="Latest stock change" value={latestMovement
+                ? `${latestMovement.type === 'IN' ? '+' : '−'}${latestMovement.qty} · ${latestMovement.reason || 'Stock change'} · ${latestMovement.date}`
+                : 'No stock movement recorded'} />
+              <Row label="Landed Cost (per unit)" value={fmt(product.costPrice)} valueColor={colors.expense} />
+              <Row label="Current Selling Price" value={fmt(product.suggestedPrice)} valueColor={colors.revenue} />
               <Row label="VAT per Unit"           value={fmt(extractVATAmount(product.suggestedPrice))} valueColor="#E65100" />
               <Row label="Profit per Unit"        value={`${fmt(profitPerUnit)} (+${profitPct.toFixed(1)}%)`} valueColor={colors.revenue} />
               <Row label="Markup"                 value={`${product.markup}%`} />
@@ -204,8 +222,8 @@ const detailStyles = StyleSheet.create({
   outOfStockBanner: { backgroundColor: '#D32F2F', borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, marginBottom: 12 },
   outOfStockBannerTxt: { color: '#fff', fontSize: 13, fontFamily: 'Inter_700Bold' },
   row:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 13, borderBottomWidth: StyleSheet.hairlineWidth },
-  rowLabel:   { fontSize: 13, fontFamily: 'Inter_400Regular' },
-  rowValue:   { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  rowLabel:   { fontSize: 13, fontFamily: 'Inter_400Regular', flex: 1, paddingRight: 10 },
+  rowValue:   { fontSize: 14, fontFamily: 'Inter_600SemiBold', flexShrink: 1, textAlign: 'right' },
   actions:    { flexDirection: 'row', gap: 8, marginTop: 16 },
   actionBtn:  { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 14 },
   actionBtnTxt: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
@@ -223,6 +241,8 @@ function ProductCard({ item, index, onPress }: { item: Product; index: number; o
   const isLowStock   = item.stockQty > 0 && item.stockQty < 5;
   const profit   = item.suggestedPrice - item.costPrice;
   const profitPct = item.costPrice > 0 ? (profit / item.costPrice) * 100 : 0;
+  const { stockMovements } = useEntries();
+  const latestMovement = stockMovements.find(movement => movement.productId === item.id);
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 60 + 100).springify()}>
@@ -299,6 +319,11 @@ function ProductCard({ item, index, onPress }: { item: Product; index: number; o
             Profit/unit: {fmt(profit)} (+{profitPct.toFixed(1)}%) · Stock value: {fmt(item.stockCost ?? item.stockQty * item.costPrice)}
           </Text>
         </View>
+        {latestMovement && (
+          <Text style={[styles.tapHint, { color: colors.mutedForeground, textAlign: 'left' }]}>
+            Latest stock change: {latestMovement.type === 'IN' ? '+' : '−'}{latestMovement.qty} · {latestMovement.reason || 'Stock change'} · {latestMovement.date}
+          </Text>
+        )}
 
         <View style={{ paddingHorizontal: 14 }}>
           <ProductPdfControls product={item} />
@@ -356,12 +381,19 @@ function ProductEditModal({ product, onClose }: { product: Product; onClose: () 
 export default function ProductsScreen() {
   const colors   = useColors();
   const insets   = useSafeAreaInsets();
+  const { productId } = useLocalSearchParams<{ productId?: string }>();
   const { products, productsLoading, entries, deleteProduct } = useEntries();
 
   const [selected, setSelected] = useState<Product | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
+  useEffect(() => {
+    if (!productId || productsLoading) return;
+    const requested = products.find(product => product.id === productId);
+    if (requested) setSelected(requested);
+  }, [productId, products, productsLoading]);
+
   const visibleProducts = products.filter((product) => {
     if (product.archived) return false;
     const matchesSearch = `${product.name} ${product.industry}`.toLowerCase().includes(search.trim().toLowerCase());
@@ -483,7 +515,10 @@ export default function ProductsScreen() {
 
       {/* Product detail modal */}
       {selected && (
-        <ProductDetailModal product={selected} onClose={() => setSelected(null)} onEdit={() => { setEditing(selected); setSelected(null); }} onDelete={() => confirmDelete(selected)} />
+        <ProductDetailModal product={products.find(p => p.id === selected.id) ?? selected} onClose={() => {
+          setSelected(null);
+          if (productId) router.setParams({ productId: undefined });
+        }} onEdit={() => { setEditing(selected); setSelected(null); }} onDelete={() => confirmDelete(selected)} />
       )}
       {editing && <ProductEditModal product={editing} onClose={() => setEditing(null)} />}
     </View>

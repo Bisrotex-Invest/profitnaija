@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useEntries, Entry, EntryType, Product } from '@/context/EntriesContext';
+import { PendingPurchaseNotice } from '@/components/PendingPurchaseNotice';
 import { useProfile } from '@/context/ProfileContext';
 import { getSubscriptionSetupStage } from '@workspace/accounting-core';
 import { useCustomers, Customer } from '@/context/CustomerContext';
@@ -169,6 +170,7 @@ interface SavedPurchaseInfo {
   baseCost: number;
   otherCosts: number[];
   carriageInward: number;
+  carriageCost?: number;
   handlingCost: number;
   totalLandedCost: number;
   industry: string;
@@ -220,6 +222,9 @@ function MarkupPopup({ visible, info, onUsePrice, onSkip }: MarkupPopupProps) {
             )}
             {info.carriageInward > 0 && (
               <PopupRow label="Inbound transport / freight" value={fmt(info.carriageInward)} colors={colors} />
+            )}
+            {(info.carriageCost ?? 0) > 0 && (
+              <PopupRow label="Carriage cost" value={fmt(info.carriageCost ?? 0)} colors={colors} />
             )}
             {info.handlingCost > 0 && (
               <PopupRow label="Handling Cost"    value={fmt(info.handlingCost)}       colors={colors} />
@@ -460,6 +465,7 @@ export default function AddEntryScreen() {
   const [baseCost, setBaseCost]       = useState('');
   const [otherCosts, setOtherCosts]   = useState<string[]>([]);
   const [carriageInward, setCarriageInward] = useState('');
+  const [carriageCost, setCarriageCost] = useState('');
   const [handlingCost, setHandlingCost] = useState('');
   const [industry, setIndustry]       = useState('');
   const [markup, setMarkup]           = useState('');
@@ -469,6 +475,8 @@ export default function AddEntryScreen() {
   const [savedPurchase, setSavedPurchase] = useState<SavedPurchaseInfo | null>(null);
   const [errors, setErrors]           = useState<Record<string, string>>({});
   const [saving, setSaving]           = useState(false);
+  const [saveComplete, setSaveComplete] = useState(false);
+  const [hasPendingPurchase, setHasPendingPurchase] = useState(false);
   const savingProductRef              = useRef(false);
   const [toast, setToast]             = useState<ToastState | null>(null);
 
@@ -527,13 +535,14 @@ export default function AddEntryScreen() {
   const otherCostsNums = useMemo(() => otherCosts.map(parseAmt), [otherCosts]);
   const otherCostsSum  = useMemo(() => otherCostsNums.reduce((s, n) => s + n, 0), [otherCostsNums]);
   const carriageNum    = useMemo(() => parseAmt(carriageInward), [carriageInward]);
+  const separateCarriageNum = useMemo(() => parseAmt(carriageCost), [carriageCost]);
   const handlingNum    = useMemo(() => parseAmt(handlingCost), [handlingCost]);
   const basePurchaseTotal = baseCostNum * purchaseQty;
   const [purchaseVatCharged, setPurchaseVatCharged] = useState(false);
   const purchaseVAT = purchaseVatCharged ? Math.round(basePurchaseTotal * 7.5) / 100 : 0;
   const withholdingTax = purchaseVatCharged ? Math.round(basePurchaseTotal * 5) / 100 : 0;
   const purchaseAmount = basePurchaseTotal + otherCostsSum;
-  const totalLanded    = purchaseAmount + carriageNum + handlingNum;
+  const totalLanded    = purchaseAmount + carriageNum + separateCarriageNum + handlingNum;
   const supplierPayable = totalLanded + purchaseVAT - withholdingTax;
   const landedCostPerUnit = purchaseQty > 0 ? totalLanded / purchaseQty : 0;
   const carriagePerUnit = purchaseQty > 0 && carriageNum > 0 ? carriageNum / purchaseQty : 0;
@@ -570,6 +579,7 @@ export default function AddEntryScreen() {
     setBaseCost('');
     setOtherCosts([]);
     setCarriageInward('');
+    setCarriageCost('');
     setHandlingCost('');
     setIndustry('');
     setMarkup('');
@@ -748,6 +758,7 @@ export default function AddEntryScreen() {
   };
 
   const handleSave = async () => {
+    if (saving || saveComplete || hasPendingPurchase) return;
     if (!validate()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
@@ -808,6 +819,7 @@ export default function AddEntryScreen() {
           materialCosts: otherCostsNums,  // stored as materialCosts for backward compat
           purchaseAmount,
           carriageInward: carriageNum,
+          carriageCost: separateCarriageNum,
           handlingCost: handlingNum,
           totalLandedCost: totalLanded,
           purchaseVatCharged,
@@ -838,6 +850,8 @@ export default function AddEntryScreen() {
           });
         }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setSaveComplete(true);
+        setSaving(false);
         showToast(isCreditPurchaseTransaction ? 'Creditors entry saved and stock updated!' : 'Purchase saved and stock updated!', 'success');
         setTimeout(() => router.back(), 1200);
         return;
@@ -1014,7 +1028,7 @@ export default function AddEntryScreen() {
       }
       console.log('[handleSave] error.code:', err?.code, '| message:', err?.message);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Save Failed', err?.code ?? err?.message ?? 'Unknown error');
+      Alert.alert(err?.code === 'PURCHASE_CONFIRMATION_PENDING' ? 'Purchase confirmation' : 'Save Failed', err?.message ?? err?.code ?? 'Unknown error');
       setSaving(false);
     }
   };
@@ -1730,6 +1744,15 @@ export default function AddEntryScreen() {
               onChangeText={setCarriageInward}
               placeholder="0.00"
               color={primaryColor}
+              testID="input-freight"
+            />
+
+            <Text style={[styles.subLabel, { color: colors.mutedForeground, marginTop: 4 }]}>Carriage cost ₦</Text>
+            <AmountInput
+              value={carriageCost}
+              onChangeText={setCarriageCost}
+              placeholder="0.00"
+              color={primaryColor}
               testID="input-carriage"
             />
 
@@ -1748,7 +1771,7 @@ export default function AddEntryScreen() {
               <View style={[styles.infoBox, { backgroundColor: colors.secondary, borderColor: colors.primary + '33' }]}>
                 <Info size={13} color={colors.primary} />
                 <Text style={[styles.infoBoxText, { color: colors.primary }]}>
-                  Carriage per unit: {fmt(carriagePerUnit)} ({fmt(carriageNum)} ÷ {purchaseQty} units)
+                  Freight per unit: {fmt(carriagePerUnit)} ({fmt(carriageNum)} ÷ {purchaseQty} units)
                 </Text>
               </View>
             )}
@@ -1784,6 +1807,12 @@ export default function AddEntryScreen() {
                   <View style={styles.totalBoxRow}>
                     <Text style={[styles.totalBoxLabel, { color: colors.mutedForeground }]}>Handling Cost</Text>
                     <Text style={[styles.totalBoxValue, { color: colors.foreground }]}>{fmt(handlingNum)}</Text>
+                  </View>
+                )}
+                {separateCarriageNum > 0 && (
+                  <View style={styles.totalBoxRow}>
+                    <Text style={[styles.totalBoxLabel, { color: colors.mutedForeground }]}>Carriage cost</Text>
+                    <Text style={[styles.totalBoxValue, { color: colors.foreground }]}>{fmt(separateCarriageNum)}</Text>
                   </View>
                 )}
                 <View style={[styles.totalBoxRow, styles.totalBoxFinalRow, { borderTopColor: colors.border }]}>
@@ -2136,13 +2165,22 @@ export default function AddEntryScreen() {
         )}
 
         {/* Save Button */}
+        {(isPurchase || isCreditPurchaseTransaction) && (
+          <PendingPurchaseNotice saving={saving} onPendingChange={setHasPendingPurchase}
+            onConfirmed={() => {
+              setSaveComplete(true);
+              setSaving(false);
+              showToast('Purchase confirmed and stock updated.', 'success');
+              setTimeout(() => router.back(), 1200);
+            }} />
+        )}
         <Animated.View entering={FadeInUp.delay(280).springify()} style={styles.saveWrap}>
           <Pressable
             onPress={handleSave}
-            disabled={saving}
+            disabled={saving || saveComplete || hasPendingPurchase}
             style={({ pressed }) => [
               styles.saveBtn,
-              { backgroundColor: primaryColor, opacity: saving ? 0.7 : pressed ? 0.88 : 1, transform: [{ scale: pressed && !saving ? 0.98 : 1 }] },
+              { backgroundColor: primaryColor, opacity: saving || saveComplete || hasPendingPurchase ? 0.7 : pressed ? 0.88 : 1, transform: [{ scale: pressed && !saving ? 0.98 : 1 }] },
             ]}
             testID="btn-save"
           >
@@ -2153,6 +2191,8 @@ export default function AddEntryScreen() {
             <Text style={styles.saveBtnText}>
               {saving
                 ? 'Saving…'
+                : saveComplete ? 'Saved'
+                : hasPendingPurchase ? 'Check pending purchase above'
                 : isSale        ? 'Save Sale'
                 : isCreditSalePayment ? 'Save Debtors Payment'
                 : isCreditSaleTransaction ? 'Save Debtors'
@@ -2278,12 +2318,12 @@ const styles = StyleSheet.create({
   infoBoxText: { flex: 1, fontSize: 12, fontFamily: 'Inter_500Medium' },
 
   totalBox:         { borderRadius: 12, borderWidth: 1, padding: 12, gap: 6, marginTop: 4 },
-  totalBoxRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalBoxLabel:    { fontSize: 13, fontFamily: 'Inter_400Regular' },
-  totalBoxValue:    { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  totalBoxFinalRow: { paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, marginTop: 2 },
-  totalBoxFinalLabel: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  totalBoxFinalValue: { fontSize: 16, fontFamily: 'Inter_700Bold' },
+  totalBoxRow:      { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4 },
+  totalBoxLabel:    { flexGrow: 1, flexBasis: 145, flexShrink: 1, fontSize: 13, lineHeight: 18, fontFamily: 'Inter_400Regular' },
+  totalBoxValue:    { flexShrink: 0, textAlign: 'right', fontVariant: ['tabular-nums'], fontSize: 13, lineHeight: 18, fontFamily: 'Inter_600SemiBold' },
+  totalBoxFinalRow: { flexDirection: 'column', alignItems: 'stretch', paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, marginTop: 2 },
+  totalBoxFinalLabel: { fontSize: 14, lineHeight: 20, fontFamily: 'Inter_700Bold' },
+  totalBoxFinalValue: { alignSelf: 'flex-end', textAlign: 'right', fontVariant: ['tabular-nums'], fontSize: 16, fontFamily: 'Inter_700Bold' },
 
   markupLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   defaultBadge:   { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },

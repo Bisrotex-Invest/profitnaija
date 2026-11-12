@@ -96,8 +96,8 @@ type MetricKey =
   | 'vat';
 
 function MetricRow({
-  label, value, helperText, valueColor, labelColor, bold = false, onPress,
-}: { label: string; value: string; helperText?: string; valueColor?: string; labelColor?: string; bold?: boolean; onPress?: () => void; }) {
+  label, value, helperText, valueColor, labelColor, bold = false, onPress, testID,
+}: { label: string; value: string; helperText?: string; valueColor?: string; labelColor?: string; bold?: boolean; onPress?: () => void; testID?: string; }) {
   const colors = useColors();
   const row = (
     <View style={[mStyles.row, { borderBottomColor: colors.border }]}>
@@ -117,7 +117,7 @@ function MetricRow({
       </View>
     </View>
   );
-  return onPress ? <Pressable onPress={onPress}>{row}</Pressable> : row;
+  return onPress ? <Pressable testID={testID} accessibilityRole="button" onPress={onPress}>{row}</Pressable> : row;
 }
 
 function MetricDetailModal({
@@ -437,6 +437,8 @@ function MetricDetailModal({
               label={row.name}
               helperText={`${row.quantity} on hand × ${fmt(row.unitCost)} landed cost per unit`}
               value={fmt(row.totalCost)}
+              testID={`button-open-stock-product-${row.productId}`}
+              onPress={() => router.push({ pathname: '/(tabs)/product', params: { productId: row.productId } })}
             />
           ))}
           {stockBreakdown.length === 0 && stockValue > 0 && (

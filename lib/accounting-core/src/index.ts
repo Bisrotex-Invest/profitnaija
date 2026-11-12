@@ -9,6 +9,8 @@ export * from './creditReturns.ts';
 export * from './statementLayout.ts';
 export * from './workingCapital.ts';
 export * from './supplierPurchase.ts';
+export * from './productActivity.ts';
+export * from './confirmedPurchase.ts';
 export * from './accountingYear.ts';
 export * from './ageing.ts';
 export * from './statementExport.ts';

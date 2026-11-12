@@ -12,6 +12,7 @@ import {
   doc,
   addDoc,
   getDoc,
+  getDocFromServer,
   getDocs,
   runTransaction,
   onSnapshot,
@@ -57,7 +58,7 @@ async function assertOpeningSnapshotForPurchase(tx: Transaction, userId: string)
 }
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/context/ProfileContext';
-import { isPurchaseBlockedByOpeningSetup } from '@workspace/accounting-core';
+import { isPurchaseBlockedByOpeningSetup, preparePurchaseAttempt, confirmPurchaseAttempt } from '@workspace/accounting-core';
 import {
   createLinkedCreditPayment,
   updateLinkedCreditPayment,
@@ -347,7 +348,8 @@ export interface Entry {
   materialCosts?: number[];
   unitPurchasePrice?: number;
   purchaseAmount?: number;   // base purchase plus other purchase charges, excluding carriage/handling
-  carriageInward?: number;
+  carriageInward?: number; // inbound transport / freight (legacy stored field)
+  carriageCost?: number;   // separately recorded carriage charge
   handlingCost?: number;     // handling / packaging cost on a purchase
   totalLandedCost?: number;
   industry?: string;
@@ -657,6 +659,7 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
           unitPurchasePrice: d.unitPurchasePrice,
           purchaseAmount: d.purchaseAmount,
           carriageInward: d.carriageInward,
+          carriageCost: d.carriageCost,
           handlingCost: d.handlingCost,
           totalLandedCost: d.totalLandedCost,
           industry: d.industry,
@@ -1015,7 +1018,7 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
       return (entry.unitPurchasePrice ?? entry.baseCost ?? 0) * qty;
     }
     const ancillary = (entry.materialCosts ?? []).reduce((sum, value) => sum + value, 0)
-      + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0);
+      + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0);
     return Math.max(0, (entry.purchaseAmount ?? entry.totalLandedCost ?? entry.amount ?? 0) - ancillary);
   };
 
@@ -1171,15 +1174,21 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
     // units below zero.
     if (productId && typeof stockDelta === 'number' && stockDelta !== 0) {
       const productRef = doc(db, 'users', userId, 'products', productId);
-      const entryRef = doc(collection(db, 'users', userId, subName));
-      const movementRef = doc(collection(db, 'users', userId, 'stockMovements'));
-
-      const cashLedgerSnapshot = hasMoneyOutflow(entry)
-        ? await getCashLedgerSnapshot(db, userId)
-        : null;
+      const attempt = isPurchase ? await preparePurchaseAttempt(AsyncStorage, userId, { entry }, () => ({
+        entry: doc(collection(db, 'users', userId, subName)).id,
+        product: productId,
+        movement: doc(collection(db, 'users', userId, 'stockMovements')).id,
+      })) : null;
+      const entryRef = attempt ? doc(db, 'users', userId, subName, attempt.ids.entry) : doc(collection(db, 'users', userId, subName));
+      const movementRef = attempt ? doc(db, 'users', userId, 'stockMovements', attempt.ids.movement) : doc(collection(db, 'users', userId, 'stockMovements'));
       let transactionPromise: Promise<any> | undefined;
       try {
-      transactionPromise = runTransaction(db, async (tx) => {
+      const commit = async (beforeCommit: () => void) => {
+      // A previous timed-out attempt may already have committed. Confirm it
+      // before checking balances, which already include that purchase.
+      if (attempt && (await getDocFromServer(entryRef)).exists()) return;
+      const cashLedgerSnapshot = hasMoneyOutflow(entry) ? await getCashLedgerSnapshot(db, userId) : null;
+      await runTransaction(db, async (tx) => {
         // The entry ID is preallocated and stable across online retries and
         // offline replay. Read it before every other operation so a replay
         // that wins a timeout race cannot mutate stock twice.
@@ -1219,6 +1228,7 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
           throw new Error(`Not enough stock. Only ${currentStock} unit${currentStock === 1 ? '' : 's'} available. Record a purchase first to add more stock.`);
         }
 
+        beforeCommit();
         tx.set(entryRef, {
           ...data,
           productId,
@@ -1262,12 +1272,17 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
         });
         advanceCashLedgerControl(tx, cashControl);
       });
-      if (hasMoneyOutflow(entry)) await transactionPromise;
+      };
+      transactionPromise = attempt
+        ? confirmPurchaseAttempt(AsyncStorage, userId, attempt, commit)
+        : commit(() => {});
+      if (attempt || hasMoneyOutflow(entry)) await transactionPromise;
       else await Promise.race([
           transactionPromise,
           new Promise<never>((_, reject) => setTimeout(() => reject(Object.assign(new Error('STOCK_TRANSACTION_TIMEOUT'), { code: 'deadline-exceeded' })), 5000)),
         ]);
       } catch (error: any) {
+        if (attempt && error?.confirmationPending) throw error; // Never replay an uncertain cash/stock commit as a different operation.
         if (hasMoneyOutflow(entry)) throw error;
         const code = String(error?.code ?? '');
         const message = String(error?.message ?? '').toLowerCase();
@@ -1429,13 +1444,19 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
       if (loading || !accountingReady) throw new Error('Wait for your Cash and Bank balances to load, then try again.');
     }
     await getAuthInstance();
-    const productRef = doc(collection(db, 'users', userId, 'products'));
-    const entryRef = doc(collection(db, 'users', userId, subcollectionForType(entry.type)));
-    const movementRef = doc(collection(db, 'users', userId, 'stockMovements'));
-    const cashLedgerSnapshot = hasMoneyOutflow(entry)
-      ? await getCashLedgerSnapshot(db, userId)
-      : null;
+    const attempt = await preparePurchaseAttempt(AsyncStorage, userId, { entry, product }, () => ({
+      product: doc(collection(db, 'users', userId, 'products')).id,
+      entry: doc(collection(db, 'users', userId, subcollectionForType(entry.type))).id,
+      movement: doc(collection(db, 'users', userId, 'stockMovements')).id,
+    }));
+    const productRef = doc(db, 'users', userId, 'products', attempt.ids.product);
+    const entryRef = doc(db, 'users', userId, subcollectionForType(entry.type), attempt.ids.entry);
+    const movementRef = doc(db, 'users', userId, 'stockMovements', attempt.ids.movement);
+    await confirmPurchaseAttempt(AsyncStorage, userId, attempt, async beforeCommit => {
+    if ((await getDocFromServer(entryRef)).exists()) return;
+    const cashLedgerSnapshot = hasMoneyOutflow(entry) ? await getCashLedgerSnapshot(db, userId) : null;
     await runTransaction(db, async (tx) => {
+      if ((await tx.get(entryRef)).exists()) return;
       await assertOpeningSnapshotForPurchase(tx, userId);
       const cashControl = await readCashLedgerControl(tx, db, userId);
       if (cashLedgerSnapshot) {
@@ -1445,6 +1466,7 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
       }
       const landed = entryStockValueImpact(entry);
       await reservePartyIdentity(tx, entry);
+      beforeCommit();
       tx.set(productRef, {
         ...product, stockQty: qty, currentStock: qty, stockCost: landed,
         latestStockEventId: entryRef.id, stockRevision: 1,
@@ -1461,6 +1483,7 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
         date: entry.date, userId, sourceEntryId: entryRef.id, createdAt: serverTimestamp(),
       });
       advanceCashLedgerControl(tx, cashControl);
+    });
     });
   };
 

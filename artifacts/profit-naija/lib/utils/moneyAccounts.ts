@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import type { Entry } from '@/context/EntriesContext';
 import { getGrossSaleValue, getPurchaseBaseCost, isDirectExpenseEntry } from './formulas.ts';
-import { getOpeningRecord, financialMoneyMovements, dayBefore, isCreditReturn, bankAccountDisplayName, bankAccountKey, cents } from '@workspace/accounting-core';
+import { getOpeningRecord, financialMoneyMovements, dayBefore, isCreditReturn, bankAccountDisplayName, bankAccountKey, cents, purchaseReadDeadline } from '@workspace/accounting-core';
 
 export type PaymentMode = 'cash' | 'bank' | 'credit' | 'non_cash';
 export type MoneyAccount = 'cash' | 'bank';
@@ -59,7 +59,7 @@ export function getMoneyAccountMovements(entries: Entry[], cutoffDate?: string):
           ? entry.totalLandedCost + (entry.purchaseVAT ?? 0) - (entry.withholdingTax ?? 0)
           : getPurchaseBaseCost(entry)
             + (entry.materialCosts?.reduce((sum, cost) => sum + cost, 0) ?? 0)
-            + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0)
+            + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0)
             + (entry.purchaseVAT ?? 0) - (entry.withholdingTax ?? 0));
         break;
       case 'credit_purchase_payment': amount = -entry.amount; break;
@@ -306,6 +306,10 @@ export async function getCashLedgerSnapshot(
   userId: string,
   excludePath?: string,
 ): Promise<MoneyAccountFundingSnapshot> {
+  return purchaseReadDeadline(loadCashLedgerSnapshot(firestore, userId, excludePath));
+}
+
+async function loadCashLedgerSnapshot(firestore: Firestore, userId: string, excludePath?: string): Promise<MoneyAccountFundingSnapshot> {
   const rootRef = doc(firestore, 'users', userId);
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const before = await getDocFromServer(rootRef);

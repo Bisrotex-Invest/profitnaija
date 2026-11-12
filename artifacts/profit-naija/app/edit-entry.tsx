@@ -139,18 +139,18 @@ export default function EditEntryScreen() {
       ...(purchase ? {
         productId: product?.id, itemName: product?.name ?? entry.itemName, unitsPurchased: qty, baseCost: number(unitPrice), unitPurchasePrice: number(unitPrice),
         purchaseAmount: total + (entry.materialCosts?.reduce((sum, cost) => sum + cost, 0) ?? 0),
-        totalLandedCost: total + (entry.materialCosts?.reduce((sum, cost) => sum + cost, 0) ?? 0) + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0),
+        totalLandedCost: total + (entry.materialCosts?.reduce((sum, cost) => sum + cost, 0) ?? 0) + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0),
         ...(typeof entry.purchaseVatCharged === 'boolean' ? {
           purchaseVAT: entry.purchaseVatCharged ? Math.round(total * 7.5) / 100 : 0,
           withholdingTax: entry.purchaseVatCharged ? Math.round(total * 5) / 100 : 0,
         } : {}),
         supplierPayable: total + (entry.materialCosts?.reduce((sum, cost) => sum + cost, 0) ?? 0)
-          + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0)
+          + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0)
           + (typeof entry.purchaseVatCharged === 'boolean'
             ? entry.purchaseVatCharged ? Math.round(total * 7.5) / 100 - Math.round(total * 5) / 100 : 0
             : (entry.purchaseVAT ?? 0) - (entry.withholdingTax ?? 0)),
         amount: total + (entry.materialCosts?.reduce((sum, cost) => sum + cost, 0) ?? 0)
-          + (entry.carriageInward ?? 0) + (entry.handlingCost ?? 0)
+          + (entry.carriageInward ?? 0) + (entry.carriageCost ?? 0) + (entry.handlingCost ?? 0)
           + (typeof entry.purchaseVatCharged === 'boolean'
             ? entry.purchaseVatCharged ? Math.round(total * 7.5) / 100 - Math.round(total * 5) / 100 : 0
             : (entry.purchaseVAT ?? 0) - (entry.withholdingTax ?? 0)),
